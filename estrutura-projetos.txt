@@ -1,0 +1,70 @@
+�   .gitignore
+�   app.json
+�   eslint.config.js
+�   estrutura-projetos.txt
+�   expo-env.d.ts
+�   package-lock.json
+�   package.json
+�   README.md
+�   tsconfig.json
+�   
++---.expo
+�   �   devices.json
+�   �   README.md
+�   �   
+�   +---types
+�           router.d.ts
+�           
++---.vscode
+�       extensions.json
+�       settings.json
+�       
++---app
+�       index.jsx
+�       
++---assets
+�   +---images
+�           android-icon-background.png
+�           android-icon-foreground.png
+�           android-icon-monochrome.png
+�           favicon.png
+�           icon.png
+�           partial-react-logo.png
+�           react-logo.png
+�           react-logo@2x.png
+�           react-logo@3x.png
+�           splash-icon.png
+�           
++---components
+�       AdWall.jsx
+�       Button.jsx
+�       Header.jsx
+�       Modal.jsx
+�       RewardedAd.jsx
+�       ScoreboardModal.jsx
+�       ShareModal.jsx
+�       SubscriptionModal.jsx
+�       
++---constants
+�       data.jsx
+�       theme.ts
+�       
++---contexts
+�       DeckContext.jsx
+�       
++---games
+�       Baralho.jsx
+�       DesafiosRapidos.jsx
+�       EuNunca.jsx
+�       GameWrapper.jsx
+�       GenericGame.jsx
+�       ProvavelGame.jsx
+�       TribunalGame.jsx
+�       VerdadeOuDesafio.jsx
+�       
++---node_modules
++---screens
+        Lobby.jsx
+        PartyConfig.jsx
+        Playlist.jsx
+        Splash.jsx
