@@ -1,8 +1,8 @@
-import { useState, useContext } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import PropTypes from 'prop-types';
-import { DeckContext } from '../contexts/DeckContext';
+import { useContext, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from '../components/Button';
+import { DeckContext } from '../contexts/DeckContext';
 
 const Baralho = ({ level, onNext, onAction }) => {
     const { drawCard } = useContext(DeckContext);
@@ -42,7 +42,7 @@ const Baralho = ({ level, onNext, onAction }) => {
                 </View>
             )}
             <View style={{ width: '100%', paddingHorizontal: 20, paddingBottom: 20 }}>
-                <Button onClick={onNext} variant="ghost"><Text style={{ color: '#9ca3af' }}>Sair do Baralho</Text></Button>
+                <Button onClick={onNext} variant="ghost"><Text style={{ color: '#9ca3af' }}>Encerrar Jogo</Text></Button>
             </View>
         </View>
     );

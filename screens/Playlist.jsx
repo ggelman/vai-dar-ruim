@@ -6,10 +6,15 @@ import { Plus, X, Lock, Play } from 'lucide-react-native';
 import { GAME_LIBRARY } from '../constants/data';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
+import Header from '../components/Header'; // Usa o Header padronizado
+import { useDeck } from '../contexts/DeckContext'; // Importa contexto do baralho
+import { useSession } from '../contexts/SessionContext';
 
-const Playlist = ({ config, unlockedItems = [], onPurchase, onStartGame }) => {
+const Playlist = ({ config, unlockedItems = [], onPurchase, onStartGame, onBack }) => {
     const [playlist, setPlaylist] = useState([]);
     const [showLibrary, setShowLibrary] = useState(false);
+    const { customCards } = useSession();
+    const { resetDecks } = useDeck();
 
     useEffect(() => {
         const findGame = (id) => GAME_LIBRARY.find(g => g.id === id);
@@ -40,22 +45,27 @@ const Playlist = ({ config, unlockedItems = [], onPurchase, onStartGame }) => {
         setPlaylist(newPl);
     };
 
+    const handleStart = () => {
+        resetDecks(config.level, customCards); 
+        onStartGame(playlist);
+    };
+
     return (
         <SafeAreaView style={styles.container}>
-            <View style={styles.headerRow}>
-                <View>
-                    <Text style={styles.headerTitle}>Playlist da Noite</Text>
+            {/* Header Padronizado */}
+            <View style={{ paddingHorizontal: 24 }}>
+                <Header title="Playlist da Noite" onBack={onBack} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: -10, marginBottom: 20 }}>
                     <Text style={styles.subText}>Editável • {playlist.length} jogos</Text>
+                    <TouchableOpacity
+                        onPress={() => setShowLibrary(true)}
+                        style={styles.smallAddButton}
+                        activeOpacity={0.7}
+                    >
+                        <Plus size={16} color="white" />
+                        <Text style={styles.smallAddButtonText}>ADC JOGO</Text>
+                    </TouchableOpacity>
                 </View>
-
-                <TouchableOpacity
-                    onPress={() => setShowLibrary(true)}
-                    style={styles.smallAddButton}
-                    activeOpacity={0.7}
-                >
-                    <Plus size={16} color="white" />
-                    <Text style={styles.smallAddButtonText}>ADC JOGO</Text>
-                </TouchableOpacity>
             </View>
 
             <View style={styles.playlistContainer}>
@@ -68,7 +78,6 @@ const Playlist = ({ config, unlockedItems = [], onPurchase, onStartGame }) => {
                             </TouchableOpacity>
                         </View>
                     ))}
-
                     {playlist.length === 0 && (
                         <View style={{ padding: 40, alignItems: 'center' }}>
                             <Text style={{ color: '#6b7280' }}>Adicione jogos para começar</Text>
@@ -79,7 +88,7 @@ const Playlist = ({ config, unlockedItems = [], onPurchase, onStartGame }) => {
 
             <View style={{ padding: 24, paddingBottom: 80 }}>
                 <Button
-                    onClick={() => onStartGame(playlist)}
+                    onClick={handleStart} // Usa o handler com reset
                     disabled={playlist.length === 0}
                     variant="fun"
                 >
@@ -92,34 +101,20 @@ const Playlist = ({ config, unlockedItems = [], onPurchase, onStartGame }) => {
 
             <Modal visible={showLibrary} onClose={() => setShowLibrary(false)}>
                 <Text style={styles.modalTitle}>Biblioteca de Jogos</Text>
-                <ScrollView 
-                    style={{ maxHeight: 400, width: '100%' }}
-                    contentContainerStyle={{ paddingBottom: 20 }}
-                    showsVerticalScrollIndicator={false}
-                >
+                <ScrollView style={{ maxHeight: 400, width: '100%' }}>
                     {GAME_LIBRARY.map(game => {
                         const isLocked = !game.isFree && !unlockedItems.includes(game.id) && !unlockedItems.includes('subscription');
-
                         return (
                             <TouchableOpacity
                                 key={game.id}
                                 onPress={() => isLocked ? onPurchase(game.id) : addToPlaylist(game)}
                                 style={styles.libraryItem}
-                                activeOpacity={0.7}
                             >
                                 <View style={{ flex: 1 }}>
                                     <Text style={[styles.itemTitle, { fontSize: 16 }]}>{game.title}</Text>
                                     <Text style={styles.subText}>{game.desc || "Clássico"}</Text>
                                 </View>
-
-                                {isLocked ? (
-                                    <View style={styles.priceTag}>
-                                        <Lock size={12} color="#eab308" />
-                                        <Text style={{ color: '#eab308', fontSize: 12, fontWeight: 'bold' }}>R$ {game.price}</Text>
-                                    </View>
-                                ) : (
-                                    <Plus size={24} color="#22c55e" />
-                                )}
+                                {isLocked ? <Lock size={16} color="#eab308" /> : <Plus size={24} color="#22c55e" />}
                             </TouchableOpacity>
                         );
                     })}
@@ -130,94 +125,24 @@ const Playlist = ({ config, unlockedItems = [], onPurchase, onStartGame }) => {
 };
 
 Playlist.propTypes = {
-    config: PropTypes.shape({
-        level: PropTypes.string
-    }).isRequired,
-    unlockedItems: PropTypes.arrayOf(PropTypes.string),
+    config: PropTypes.shape({ level: PropTypes.string }).isRequired,
+    unlockedItems: PropTypes.array,
     onPurchase: PropTypes.func.isRequired,
-    onStartGame: PropTypes.func.isRequired
+    onStartGame: PropTypes.func.isRequired,
+    onBack: PropTypes.func.isRequired
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#18181b',
-    },
-    headerRow: {
-        flexDirection: 'row', 
-        justifyContent: 'space-between', 
-        alignItems: 'flex-end', 
-        marginBottom: 20, 
-        paddingHorizontal: 24, 
-        paddingTop: 20 
-    },
-    headerTitle: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        color: 'white',
-    },
-    subText: {
-        fontSize: 14,
-        color: '#a1a1aa',
-    },
-    smallAddButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: '#3f3f46',
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 100,
-    },
-    smallAddButtonText: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 12,
-    },
-    playlistContainer: {
-        flex: 1,
-        backgroundColor: '#27272a',
-        marginHorizontal: 24,
-        borderRadius: 16,
-    },
-    playlistItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#3f3f46',
-    },
-    itemTitle: {
-        color: 'white',
-        fontWeight: 'bold',
-        fontSize: 18,
-    },
-    modalTitle: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: 'white',
-        textAlign: 'center',
-        marginBottom: 20,
-    },
-    libraryItem: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 12,
-        borderBottomWidth: 1,
-        borderBottomColor: '#3f3f46',
-    },
-    priceTag: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        backgroundColor: 'rgba(234, 179, 8, 0.1)',
-        paddingHorizontal: 10,
-        paddingVertical: 6,
-        borderRadius: 100,
-    },
+    // CORREÇÃO VISUAL: Fundo preto
+    container: { flex: 1, backgroundColor: '#09090b' },
+    subText: { fontSize: 14, color: '#a1a1aa' },
+    smallAddButton: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#3f3f46', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 100 },
+    smallAddButtonText: { color: 'white', fontWeight: 'bold', fontSize: 12 },
+    playlistContainer: { flex: 1, backgroundColor: '#27272a', marginHorizontal: 24, borderRadius: 16 },
+    playlistItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#3f3f46' },
+    itemTitle: { color: 'white', fontWeight: 'bold', fontSize: 18 },
+    modalTitle: { fontSize: 22, fontWeight: 'bold', color: 'white', textAlign: 'center', marginBottom: 20 },
+    libraryItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#3f3f46' }
 });
 
 export default Playlist;

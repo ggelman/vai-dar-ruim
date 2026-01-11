@@ -1,9 +1,9 @@
-import { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
-import { DeckContext } from '../contexts/DeckContext';
-import { LEVELS } from '../constants/data';
+import { useContext, useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import Button from '../components/Button';
+import SwipeableCard from '../components/SwipeableCard';
+import { DeckContext } from '../contexts/DeckContext';
 
 const EuNunca = ({ level, onNext, onAction }) => {
     const { drawCard } = useContext(DeckContext);
@@ -18,9 +18,13 @@ const EuNunca = ({ level, onNext, onAction }) => {
         }
     };
     
-    const nextCard = () => {
+    const handleSwipe = () => {
         if (onAction) onAction();
         getNewCard();
+    };
+
+    const handleManualNext = () => {
+        handleSwipe();
     };
 
     useEffect(() => {
@@ -28,25 +32,32 @@ const EuNunca = ({ level, onNext, onAction }) => {
     }, []);
 
     return (
-        <View style={[styles.gameContainer, { backgroundColor: (LEVELS[level] || LEVELS.fun).color }]}>
-            <View style={styles.gameContent}>
-                <Text style={styles.gameLabel}>EU NUNCA</Text>
-                <Text style={styles.gameBigText}>
-                    {currentCard?.text}
-                </Text>
+        <View style={styles.gameContainer}>
+            <View style={styles.cardArea}>
+                <SwipeableCard onSwipe={handleSwipe}>
+                    <View style={[styles.cardContent, { borderColor: 'rgba(255,255,255,0.2)' }]}>
+                        <Text style={[styles.gameLabel, { color: 'rgba(255,255,255,0.7)' }]}>EU NUNCA</Text>
+                        <Text style={styles.gameBigText}>
+                            {currentCard?.text}
+                        </Text>
+                        <Text style={styles.instruction}>
+                            {level === 'fun' ? '(Perde 1 ponto se já fez)' : '(Bebe se já fez)'}
+                        </Text>
+                        {/* [CORREÇÃO AQUI]: Substituído >> por &gt;&gt; */}
+                        <Text style={styles.swipeHint}>
+                            Arraste para &gt;&gt;
+                        </Text>
+                    </View>
+                </SwipeableCard>
             </View>
 
-            <View style={styles.gameControls}>
-                <Text style={styles.gameInstruction}>
-                    Quem já fez, {level === 'fun' ? 'perde um ponto' : 'bebe'}.
-                </Text>
-
-                <Button onClick={nextCard} variant="primary">
-                    <Text style={{ fontSize: 20, fontWeight: 'bold' }}>PRÓXIMO</Text>
+            <View style={styles.footer}>
+                <Button onClick={handleManualNext} variant="primary" style={{ marginBottom: 12, opacity: 0.8 }}>
+                    <Text style={{ fontWeight: 'bold' }}>PRÓXIMO</Text>
                 </Button>
 
-                <Button onClick={onNext} variant="ghost" style={{ marginTop: 10 }}>
-                    <Text style={{ color: 'rgba(0,0,0,0.5)' }}>Trocar de Jogo</Text>
+                <Button onClick={onNext} variant="ghost">
+                    <Text style={{ color: 'rgba(255,255,255,0.5)' }}>Encerrar Jogo</Text>
                 </Button>
             </View>
         </View>
@@ -65,36 +76,56 @@ const styles = StyleSheet.create({
         padding: 24,
         justifyContent: 'space-between',
     },
-    gameContent: {
+    cardArea: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
     },
+    cardContent: {
+        backgroundColor: '#18181b', 
+        padding: 32,
+        borderRadius: 24,
+        width: '100%',
+        minHeight: 350,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4.65,
+        elevation: 8,
+    },
     gameLabel: {
         fontSize: 18,
-        fontWeight: 'bold',
-        color: 'rgba(255,255,255,0.7)',
-        marginBottom: 16,
-        letterSpacing: 1,
+        fontWeight: '900',
+        marginBottom: 24,
+        letterSpacing: 2,
+        textTransform: 'uppercase',
     },
     gameBigText: {
-        fontSize: 32,
+        fontSize: 28,
         fontWeight: 'bold',
         color: 'white',
         textAlign: 'center',
-        textShadowColor: 'rgba(0,0,0,0.2)',
-        textShadowOffset: { width: 1, height: 2 },
-        textShadowRadius: 4,
+        marginBottom: 24,
+        lineHeight: 36,
     },
-    gameControls: {
-        paddingBottom: 40,
-    },
-    gameInstruction: {
-        color: 'rgba(255,255,255,0.8)',
-        textAlign: 'center',
-        marginBottom: 20,
+    instruction: {
         fontSize: 16,
+        color: '#a8a29e', 
+        fontStyle: 'italic',
+        textAlign: 'center',
+        marginBottom: 16
     },
+    swipeHint: {
+        fontSize: 12,
+        color: '#57534e',
+        marginTop: 12
+    },
+    footer: {
+        marginTop: 20
+    }
 });
 
 export default EuNunca;

@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react-native';
 const Header = ({ title, subtitle, onBack }) => (
     <View style={styles.container}>
         <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <ArrowLeft size={24} color="white" />
+            <ArrowLeft size={24} color="#a1a1aa" /> 
         </TouchableOpacity>
         
         <Text style={styles.title}>{title}</Text>
@@ -29,15 +29,16 @@ Header.propTypes = {
 
 const styles = StyleSheet.create({
     container: {
-        paddingTop: 20, 
+        paddingTop: 10, 
         marginBottom: 20
     },
     backButton: {
         marginBottom: 16, 
-        alignSelf: 'flex-start'
+        alignSelf: 'flex-start',
+        padding: 4 
     },
     title: {
-        fontSize: 28,
+        fontSize: 32, 
         fontWeight: 'bold',
         color: 'white',
     },

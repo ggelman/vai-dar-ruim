@@ -1,9 +1,9 @@
-import { useState, useEffect, useContext } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import PropTypes from 'prop-types';
 import { Gavel } from 'lucide-react-native';
-import { DeckContext } from '../contexts/DeckContext';
+import PropTypes from 'prop-types';
+import { useContext, useEffect, useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import Button from '../components/Button';
+import { DeckContext } from '../contexts/DeckContext';
 
 const TribunalGame = ({ onNext, onAction }) => {
     const { drawCard } = useContext(DeckContext);
@@ -37,7 +37,7 @@ const TribunalGame = ({ onNext, onAction }) => {
                 </Button>
 
                 <Button onClick={onNext} variant="ghost" style={{ marginTop: 10 }}>
-                    <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Trocar de Jogo</Text>
+                    <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Encerrar Jogo</Text>
                 </Button>
             </View>
         </View>

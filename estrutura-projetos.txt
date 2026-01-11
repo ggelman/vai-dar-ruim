@@ -1,3 +1,5 @@
+Listagem de caminhos de pasta
+�   .env
 �   .gitignore
 �   app.json
 �   eslint.config.js
@@ -7,21 +9,28 @@
 �   package.json
 �   README.md
 �   tsconfig.json
-�   
 +---.expo
 �   �   devices.json
 �   �   README.md
-�   �   
+�   �   settings.json
 �   +---types
-�           router.d.ts
-�           
+�   �       router.d.ts
+�   +---web
+�       +---cache
+�           +---production
+�               +---images
+�                   +---favicon
+�                       +---favicon-a4e030697a7571b3e95d31860e4da55d2f98e5e861e2b55e414f45a8556828ba-contain-transparent
+�                               favicon-48.png
 +---.vscode
 �       extensions.json
 �       settings.json
-�       
 +---app
-�       index.jsx
-�       
+�   �   index.jsx
+�   �   party-config.jsx
+�   �   _layout.jsx
+�   +---game
+�   �       [id].jsx   
 +---assets
 �   +---images
 �           android-icon-background.png
@@ -34,7 +43,6 @@
 �           react-logo@2x.png
 �           react-logo@3x.png
 �           splash-icon.png
-�           
 +---components
 �       AdWall.jsx
 �       Button.jsx
@@ -44,24 +52,26 @@
 �       ScoreboardModal.jsx
 �       ShareModal.jsx
 �       SubscriptionModal.jsx
-�       
+�       SwipeableCard.jsx
 +---constants
 �       data.jsx
 �       theme.ts
-�       
 +---contexts
 �       DeckContext.jsx
-�       
+�       SessionContext.jsx
 +---games
 �       Baralho.jsx
+�       CincoSegundos.jsx
 �       DesafiosRapidos.jsx
 �       EuNunca.jsx
 �       GameWrapper.jsx
 �       GenericGame.jsx
+�       MestreMandou.jsx
 �       ProvavelGame.jsx
 �       TribunalGame.jsx
 �       VerdadeOuDesafio.jsx
-�       
++---hooks
+�       useContent.js
 +---node_modules
 +---screens
         Lobby.jsx

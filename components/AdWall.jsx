@@ -1,6 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Play, Video } from 'lucide-react-native';
 import PropTypes from 'prop-types';
-import { Video, Play } from 'lucide-react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Button from './Button';
 
 const AdWall = ({ onWatchAd, onSubscribe, onSkipGame }) => (
@@ -8,7 +8,7 @@ const AdWall = ({ onWatchAd, onSubscribe, onSkipGame }) => (
         <Video size={64} color="#a855f7" style={{ marginBottom: 16 }} />
         <Text style={styles.adTitle}>Acabaram as cartas grátis!</Text>
         <Text style={styles.adText}>
-            A galera quer continuar? Assista um vídeo curto para liberar mais rodadas.
+            Pô agora que tá ficando bom! Assista um vídeo curto para liberar mais loucura.
         </Text>
 
         <View style={{ width: '100%', marginTop: 20, gap: 10 }}>
@@ -20,7 +20,7 @@ const AdWall = ({ onWatchAd, onSubscribe, onSkipGame }) => (
             </Button>
 
             <Button onClick={onSkipGame} variant="ghost" style={{ marginTop: 0 }}>
-                <Text style={{ color: '#6b7280' }}>Pular para próximo jogo</Text>
+                <Text style={{ color: '#6b7280' }}>Pular para Encerrar Jogo</Text>
             </Button>
         </View>
 

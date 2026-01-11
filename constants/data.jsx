@@ -33,7 +33,7 @@ export const GAME_LIBRARY = [
     { id: 'verdade_desafio', title: 'Verdade ou Desafio', type: 'classic', isFree: true },
     { id: 'kings', title: 'Rei da Mesa', type: 'card', isFree: true },
     { id: 'tribunal', title: 'Tribunal do Cancelamento', type: 'social', isFree: false, price: 9.90, desc: "Julgue seus amigos." },
-    { id: 'provavel', title: 'Quem é Mais Provável?', type: 'expose', isFree: false, price: 9.90, desc: "Aponte o dedo e corra." }
+    { id: 'provavel', title: 'Quem é Mais Provável?', type: 'expose', isFree: false, price: 9.90, desc: "Aponte o dedo e corra." },
 ];
 
 export const DB_CONTENT = {

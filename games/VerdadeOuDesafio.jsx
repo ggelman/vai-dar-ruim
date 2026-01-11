@@ -1,153 +1,94 @@
-import { useState, useContext } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, TouchableOpacity, StatusBar, Platform } from 'react-native';
 import PropTypes from 'prop-types';
-import { DeckContext } from '../contexts/DeckContext';
-import Button from '../components/Button';
+import { X } from 'lucide-react-native'; 
+import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context'; // Importante para o Notch
+import AdWall from '../components/AdWall';
+import ShareModal from '../components/ShareModal';
+import RewardedAd from '../components/RewardedAd';
 
-const VerdadeOuDesafio = ({ level, players, onNext, onAction }) => {
-    const { drawCard } = useContext(DeckContext);
-    const [state, setState] = useState('picker');
-    const [activePlayer, setActivePlayer] = useState(null);
-    const [choice, setChoice] = useState(null);
-    const [content, setContent] = useState(null);
+const GameWrapper = ({ children, onNext, gameId, unlockedItems = [], onSubscribe, players, onUpdateStats, onExit }) => {
+    const insets = useSafeAreaInsets(); // Pega as medidas seguras do dispositivo
+    
+    const [cardsViewed, setCardsViewed] = useState(0);
+    const [showAd, setShowAd] = useState(false);
+    const [showRewardedAd, setShowRewardedAd] = useState(false);
+    const [showShare, setShowShare] = useState(false);
+    const [shareContent, setShareContent] = useState("");
 
-    const pickPlayer = () => {
-        if (onAction) onAction();
-        const pList = players.length > 0 ? players : [{ name: 'Jogador 1' }];
-        const p = pList[Math.floor(Math.random() * pList.length)];
-        setActivePlayer(p);
-        setState('choice');
-    };
+    const FREE_LIMIT = 8;
+    const isPremium = unlockedItems.includes('subscription') || unlockedItems.includes(gameId);
 
-    const selectMode = (mode) => {
-        setChoice(mode);
-        const card = drawCard('verdade_desafio', c => c.type === mode.toLowerCase());
-
-        if (card) {
-            setContent(card);
-        } else {
-            setContent({ text: "Erro: Sem perguntas deste tipo." });
+    const enhancedChildren = React.cloneElement(children, {
+        onAction: (actionType) => { 
+            if (!isPremium) {
+                const next = cardsViewed + 1;
+                if (next >= FREE_LIMIT) setShowAd(true);
+                else setCardsViewed(next);
+            }
+            if (onUpdateStats && actionType) {
+                onUpdateStats(actionType); 
+            }
+        },
+        onNext,
+        onShare: (content) => {
+            setShareContent(content);
+            setShowShare(true);
         }
-        setState('result');
-    };
+    });
 
-    const getThemeColor = () => {
-        switch (level) {
-            case 'fun': return '#16a34a';
-            case 'chaos': return '#991b1b';
-            default: return '#6b21a8';
-        }
-    };
+    if (showRewardedAd) {
+        return <RewardedAd 
+            onRewarded={() => { setCardsViewed(0); setShowAd(false); setShowRewardedAd(false); }} 
+            onDismiss={() => setShowRewardedAd(false)} 
+        />
+    }
+
+    if (showAd) return <AdWall onWatchAd={() => setShowRewardedAd(true)} onSubscribe={onSubscribe} onSkipGame={onNext} />;
 
     return (
-        <View style={[styles.gameContainer, { backgroundColor: getThemeColor() }]}>
+        <View style={{ flex: 1, backgroundColor: '#09090b' }}>
+            <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
+            
+            {/* Botão Sair Posicionado Dinamicamente */}
+            <View style={{ 
+                position: 'absolute', 
+                // AQUI ESTÁ A CORREÇÃO: Soma a área segura do topo + 10px de margem
+                top: insets.top + 10, 
+                right: 20, 
+                zIndex: 100 
+            }}>
+                <TouchableOpacity 
+                    onPress={onExit} 
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                    style={{
+                        padding: 8,
+                        // Fundo levemente escuro para garantir contraste se o jogo for claro
+                        backgroundColor: 'rgba(0,0,0,0.2)', 
+                        borderRadius: 20
+                    }}
+                >
+                    <X size={28} color="white" strokeWidth={3} />
+                </TouchableOpacity>
+            </View>
 
-            {state === 'picker' && (
-                <View style={styles.centerContent}>
-                    <Text style={styles.subTitle}>QUEM VAI AGORA?</Text>
-                    <View style={{ width: '100%', marginTop: 32 }}>
-                        <Button onClick={pickPlayer}>GIRAR A ROLETA</Button>
-                        <Button onClick={onNext} variant="ghost" style={{ marginTop: 24 }}>
-                            <Text style={{ color: 'rgba(255,255,255,0.6)' }}>Encerrar Jogo</Text>
-                        </Button>
-                    </View>
-                </View>
-            )}
-
-            {state === 'choice' && activePlayer && (
-                <View style={styles.centerContent}>
-                    <Text style={styles.playerName}>{activePlayer.name.toUpperCase()}</Text>
-                    <Text style={styles.subTitle}>Sua vez de escolher.</Text>
-
-                    <View style={{ width: '100%', gap: 16, marginTop: 40 }}>
-                        <Button
-                            onClick={() => selectMode('Verdade')}
-                            style={{ backgroundColor: '#3b82f6' }}
-                        >
-                            VERDADE
-                        </Button>
-                        <Button
-                            onClick={() => selectMode('Desafio')}
-                            style={{ backgroundColor: '#f97316' }}
-                        >
-                            DESAFIO
-                        </Button>
-                    </View>
-                </View>
-            )}
-
-            {state === 'result' && (
-                <View style={{ flex: 1, justifyContent: 'space-between' }}>
-                    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                        <Text style={styles.resultLabel}>{choice} PARA {activePlayer?.name}</Text>
-                        <Text style={styles.resultText}>"{content?.text}"</Text>
-                    </View>
-
-                    <View>
-                        <Button onClick={() => { onAction('success'); setState('picker'); }}>CUMPRIU</Button>
-                        <Button onClick={() => { onAction('fail'); setState('picker'); }} variant="ghost">RECUSOU (BEBE) 🍺</Button>
-                        <Text style={styles.footerNote}>Próximo jogador em qualquer opção</Text>
-                    </View>
-                </View>
-            )}
+            <SafeAreaView style={{ flex: 1 }}>
+                {enhancedChildren}
+                {showShare && <ShareModal content={shareContent} levelColor="#a855f7" onClose={() => setShowShare(false)} />}
+            </SafeAreaView>
         </View>
     );
 };
 
-VerdadeOuDesafio.propTypes = {
-    level: PropTypes.string.isRequired,
-    players: PropTypes.arrayOf(PropTypes.shape({
-        id: PropTypes.number,
-        name: PropTypes.string,
-        sex: PropTypes.string
-    })).isRequired,
+GameWrapper.propTypes = {
+    children: PropTypes.element.isRequired,
     onNext: PropTypes.func.isRequired,
-    onAction: PropTypes.func
+    gameId: PropTypes.string.isRequired,
+    unlockedItems: PropTypes.arrayOf(PropTypes.string),
+    onSubscribe: PropTypes.func,
+    players: PropTypes.array,
+    onUpdateStats: PropTypes.func,
+    onExit: PropTypes.func
 };
 
-const styles = StyleSheet.create({
-    gameContainer: {
-        flex: 1,
-        padding: 24,
-    },
-    centerContent: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        width: '100%',
-    },
-    subTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: 'rgba(255,255,255,0.8)',
-        textAlign: 'center',
-    },
-    playerName: {
-        fontSize: 40,
-        fontWeight: 'bold',
-        color: 'white',
-        textAlign: 'center',
-        marginBottom: 8,
-    },
-    resultLabel: {
-        fontSize: 16,
-        fontWeight: 'bold',
-        color: 'rgba(255,255,255,0.7)',
-        marginBottom: 16,
-        textAlign: 'center',
-    },
-    resultText: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: 'white',
-        textAlign: 'center',
-    },
-    footerNote: {
-        textAlign: 'center',
-        color: 'rgba(255,255,255,0.5)',
-        fontSize: 12,
-        marginTop: 8,
-    },
-});
-
-export default VerdadeOuDesafio;
+export default GameWrapper;
