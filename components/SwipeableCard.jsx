@@ -15,32 +15,38 @@ import * as Haptics from 'expo-haptics';
 const SCREEN_WIDTH = Dimensions.get('window').width;
 const SWIPE_THRESHOLD = SCREEN_WIDTH * 0.3;
 
+const SPRING_CONFIG = {
+    damping: 15,
+    stiffness: 120,
+    mass: 0.8,
+    overshootClamping: false,
+};
+
 const SwipeableCard = ({ children, onSwipe, enabled = true }) => {
     const translateX = useSharedValue(0);
     const rotate = useSharedValue(0);
-    const scale = useSharedValue(1);
+    const scale = useSharedValue(1); 
 
     const resetPosition = () => {
-        translateX.value = withSpring(0);
-        rotate.value = withSpring(0);
-        scale.value = withSpring(1);
+        translateX.value = withSpring(0, SPRING_CONFIG);
+        rotate.value = withSpring(0, SPRING_CONFIG);
+        scale.value = withSpring(1, SPRING_CONFIG);
     };
 
     const handleSuccess = (direction) => {
-        // Haptic Feedback Pesado para confirmar ação
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         
-        // Animação de saída
         const endPos = direction === 'right' ? SCREEN_WIDTH * 1.5 : -SCREEN_WIDTH * 1.5;
+        
         translateX.value = withTiming(endPos, { duration: 200 }, (finished) => {
             if (finished) {
                 runOnJS(onSwipe)();
-                // Reset imediato para o próximo card (simulando pilha infinita)
+                
                 translateX.value = 0;
-                rotate.value = 0;
-                // Pequena animação de "pop" ao aparecer o novo
-                scale.value = 0.8;
-                scale.value = withSpring(1);
+                rotate.value = (Math.random() - 0.5) * 4; 
+                
+                scale.value = 0.85;
+                scale.value = withSpring(1, { ...SPRING_CONFIG, velocity: 5 });
             }
         });
     };
@@ -49,7 +55,6 @@ const SwipeableCard = ({ children, onSwipe, enabled = true }) => {
         .enabled(enabled)
         .onUpdate((event) => {
             translateX.value = event.translationX;
-            // Rotação sutil baseada no movimento
             rotate.value = interpolate(
                 event.translationX,
                 [-SCREEN_WIDTH, SCREEN_WIDTH],

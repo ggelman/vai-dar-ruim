@@ -1,19 +1,18 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View, Text } from 'react-native';
 import { useSession } from '../../contexts/SessionContext';
 import GameWrapper from '../../games/GameWrapper';
 
 // Imports dos Jogos
-import EuNunca from '../../games/EuNunca';
-import DesafiosRapidos from '../../games/DesafiosRapidos';
-import VerdadeOuDesafio from '../../games/VerdadeOuDesafio';
 import Baralho from '../../games/Baralho';
-import TribunalGame from '../../games/TribunalGame';
-import ProvavelGame from '../../games/ProvavelGame';
+import CincoSegundos from '../../games/CincoSegundos';
+import DesafiosRapidos from '../../games/DesafiosRapidos';
+import EuNunca from '../../games/EuNunca';
 import GenericGame from '../../games/GenericGame';
-// [NOVOS IMPORTS]
-import FiveSecondsGame from '../../games/CincoSegundos';
-import MasterSaysGame from '../../games/MestreMandou';
+import MestreMandou from '../../games/MestreMandou';
+import ProvavelGame from '../../games/ProvavelGame';
+import RoletaRussa from '../../games/RoletaRussa';
+import TribunalGame from '../../games/TribunalGame';
+import VerdadeOuDesafio from '../../games/VerdadeOuDesafio';
 
 import { GAME_LIBRARY } from '../../constants/data';
 
@@ -50,9 +49,9 @@ export default function GameRoute() {
         case 'kings': GameComponent = <Baralho {...commonProps} />; break;
         case 'tribunal': GameComponent = <TribunalGame {...commonProps} />; break;
         case 'provavel': GameComponent = <ProvavelGame {...commonProps} />; break;
-        // [NOVOS CASES]
-        case 'five_seconds': GameComponent = <FiveSecondsGame {...commonProps} />; break;
-        case 'master_says': GameComponent = <MasterSaysGame {...commonProps} />; break;
+        case 'cinco_segundos': GameComponent = <CincoSegundos {...commonProps} />; break;
+        case 'mestre_mandou': GameComponent = <MestreMandou {...commonProps} />; break;
+        case 'roleta_russa': GameComponent = <RoletaRussa {...commonProps} />; break;
         default: 
             GameComponent = <GenericGame {...commonProps} gameId={id} title={gameInfo.title || "Jogo"} />;
     }

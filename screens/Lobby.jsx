@@ -3,17 +3,16 @@ import {
     View, 
     Text, 
     StyleSheet, 
-    ScrollView, 
+    FlatList, // Mantido para performance e rolagem correta
     TextInput, 
     TouchableOpacity, 
     KeyboardAvoidingView, 
     Platform, 
-    TouchableWithoutFeedback, 
     Keyboard 
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import PropTypes from 'prop-types';
-import { Trash2, Plus, Users, PenTool, Sparkles } from 'lucide-react-native';
+import { Trash2, Plus, Users, Sparkles } from 'lucide-react-native';
 import { GENERIC_NAMES } from '../constants/data';
 import Button from '../components/Button';
 import Header from '../components/Header';
@@ -66,7 +65,9 @@ const Lobby = ({ config, initialPlayers = [], onUpdatePlayers, onStartPlaylist, 
 
     const addCustomCard = () => {
         if (!tempCustom.trim()) return;
-        setCustomCards(prev => [...prev, tempCustom.trim()]);
+        // Adiciona como objeto para manter consistência, ou string se preferir. 
+        // O código original usava array de strings no customCards.
+        setCustomCards(prev => [...prev, { text: tempCustom.trim(), type: 'custom' }]);
         setTempCustom('');
     };
 
@@ -78,12 +79,37 @@ const Lobby = ({ config, initialPlayers = [], onUpdatePlayers, onStartPlaylist, 
     const isOverLimit = remaining < 0; 
     const canStart = remaining === 0;
 
+    // --- Render Items ---
+
+    const renderPlayerItem = ({ item }) => (
+        <View style={styles.playerCard}>
+            <Text style={styles.playerName}>{item.name}</Text>
+            <TouchableOpacity onPress={() => removePlayer(item.id)} style={styles.deleteButton}>
+                <Trash2 color="#ef4444" size={20} />
+            </TouchableOpacity>
+        </View>
+    );
+
+    const renderCustomItem = ({ item, index }) => (
+        <View style={[styles.playerCard, { borderLeftWidth: 3, borderLeftColor: '#facc15' }]}>
+            {/* [CORREÇÃO]: flex: 1 garante que o texto ocupe o espaço mas quebre linha, sem empurrar o lixo */}
+            <Text style={[styles.playerName, { flex: 1, flexWrap: 'wrap', marginRight: 8 }]}>
+                {item.text || item}
+            </Text>
+            {/* [CORREÇÃO]: flexShrink: 0 impede que o ícone seja esmagado */}
+            <TouchableOpacity onPress={() => removeCustomCard(index)} style={[styles.deleteButton, { flexShrink: 0 }]}>
+                <Trash2 color="#ef4444" size={20} />
+            </TouchableOpacity>
+        </View>
+    );
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={{ paddingHorizontal: 24 }}>
                 <Header title="Quem vai jogar?" onBack={onBack} />
             </View>
 
+            {/* ABAS (Visual Restaurado) */}
             <View style={styles.tabContainer}>
                 <TouchableOpacity 
                     style={[styles.tabButton, activeTab === 'players' && styles.activeTab]}
@@ -107,82 +133,71 @@ const Lobby = ({ config, initialPlayers = [], onUpdatePlayers, onStartPlaylist, 
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
                 <View style={styles.contentWrapper}>
-                    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-                        <View style={styles.listSection}>
-                            
-                            {activeTab === 'players' && (
-                                <>
-                                    <View style={styles.listHeaderRow}>
-                                        <View style={[styles.counterBadge, isOverLimit && { backgroundColor: '#ef4444' }]}>
-                                            <Users size={16} color="white" />
-                                            <Text style={styles.counterText}>
-                                                {players.length} / {config.people}
-                                            </Text>
-                                        </View>
-                                        {remaining > 0 && (
-                                            <TouchableOpacity onPress={autoFillNames}>
-                                                <Text style={styles.autoFillText}>Auto-completar</Text>
-                                            </TouchableOpacity>
-                                        )}
+                    
+                    <View style={styles.listSection}>
+                        {activeTab === 'players' ? (
+                            <>
+                                <View style={styles.listHeaderRow}>
+                                    <View style={[styles.counterBadge, isOverLimit && { backgroundColor: '#ef4444' }]}>
+                                        <Users size={16} color="white" />
+                                        <Text style={styles.counterText}>
+                                            {players.length} / {config.people}
+                                        </Text>
                                     </View>
+                                    {remaining > 0 && (
+                                        <TouchableOpacity onPress={autoFillNames}>
+                                            <Text style={styles.autoFillText}>Auto-completar</Text>
+                                        </TouchableOpacity>
+                                    )}
+                                </View>
 
-                                    <View style={[styles.listContainer, isOverLimit && { borderColor: '#ef4444', borderWidth: 1 }]}>
-                                        {players.length === 0 ? (
+                                <View style={[styles.listContainer, isOverLimit && { borderColor: '#ef4444', borderWidth: 1 }]}>
+                                    <FlatList
+                                        data={players}
+                                        keyExtractor={item => item.id.toString()}
+                                        renderItem={renderPlayerItem}
+                                        contentContainerStyle={styles.scrollContent}
+                                        keyboardShouldPersistTaps="handled"
+                                        keyboardDismissMode="on-drag"
+                                        ListEmptyComponent={
                                             <View style={styles.emptyState}>
                                                 <Text style={styles.emptyStateText}>
                                                     Adicione os nomes dos{'\n'}meliantes abaixo 👇
                                                 </Text>
                                             </View>
-                                        ) : (
-                                            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                                                {players.map((player) => (
-                                                    <View key={player.id} style={styles.playerCard}>
-                                                        <Text style={styles.playerName}>{player.name}</Text>
-                                                        <TouchableOpacity onPress={() => removePlayer(player.id)} style={styles.deleteButton}>
-                                                            <Trash2 color="#ef4444" size={20} />
-                                                        </TouchableOpacity>
-                                                    </View>
-                                                ))}
-                                            </ScrollView>
-                                        )}
-                                    </View>
-                                </>
-                            )}
+                                        }
+                                    />
+                                </View>
+                            </>
+                        ) : (
+                            <>
+                                <View style={styles.listHeaderRow}>
+                                    <Text style={{color: '#a1a1aa', fontSize: 14, flex: 1}}>
+                                        Essas cartas aparecerão aleatoriamente nos jogos. Use para fofocas ou ordens!
+                                    </Text>
+                                </View>
 
-                            {activeTab === 'custom' && (
-                                <>
-                                    <View style={styles.listHeaderRow}>
-                                        <Text style={{color: '#a1a1aa', fontSize: 14}}>
-                                            Essas cartas aparecerão aleatoriamente nos jogos. Use para fofocas ou ordens!
-                                        </Text>
-                                    </View>
-
-                                    <View style={[styles.listContainer, { borderColor: '#facc15' }]}>
-                                        {customCards.length === 0 ? (
+                                <View style={[styles.listContainer, { borderColor: '#facc15' }]}>
+                                    <FlatList
+                                        data={customCards}
+                                        keyExtractor={(_, index) => index.toString()}
+                                        renderItem={renderCustomItem}
+                                        contentContainerStyle={styles.scrollContent}
+                                        keyboardShouldPersistTaps="handled"
+                                        keyboardDismissMode="on-drag"
+                                        ListEmptyComponent={
                                             <View style={styles.emptyState}>
                                                 <Sparkles size={32} color="#facc15" style={{opacity: 0.5, marginBottom: 8}} />
                                                 <Text style={styles.emptyStateText}>
                                                     Sua chance de ser tóxico.{'\n'}Adicione cartas secretas!
                                                 </Text>
                                             </View>
-                                        ) : (
-                                            <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                                                {customCards.map((text, index) => (
-                                                    <View key={index} style={[styles.playerCard, { borderLeftWidth: 3, borderLeftColor: '#facc15' }]}>
-                                                        <Text style={styles.playerName}>{text}</Text>
-                                                        <TouchableOpacity onPress={() => removeCustomCard(index)} style={styles.deleteButton}>
-                                                            <Trash2 color="#ef4444" size={20} />
-                                                        </TouchableOpacity>
-                                                    </View>
-                                                ))}
-                                            </ScrollView>
-                                        )}
-                                    </View>
-                                </>
-                            )}
-
-                        </View>
-                    </TouchableWithoutFeedback>
+                                        }
+                                    />
+                                </View>
+                            </>
+                        )}
+                    </View>
 
                     <View style={styles.footerSection}>
                         {activeTab === 'players' ? (
@@ -256,7 +271,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#09090b' },
     contentWrapper: { flex: 1, paddingHorizontal: 24, paddingBottom: 20, paddingTop: 10, justifyContent: 'space-between' },
     
-    // Tabs
+    // Tabs (Visual Restaurado)
     tabContainer: { flexDirection: 'row', paddingHorizontal: 24, marginBottom: 16, gap: 16 },
     tabButton: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingBottom: 8, borderBottomWidth: 2, borderBottomColor: 'transparent' },
     activeTab: { borderBottomColor: '#a855f7' },
@@ -268,13 +283,17 @@ const styles = StyleSheet.create({
     counterBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#27272a', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 100 },
     counterText: { color: 'white', fontWeight: 'bold', fontSize: 14 },
     autoFillText: { color: '#a855f7', fontSize: 14, fontWeight: '600' },
+    
     listContainer: { flex: 1, backgroundColor: '#18181b', borderRadius: 16, borderWidth: 1, borderColor: '#27272a', overflow: 'hidden' },
     scrollContent: { padding: 12 },
-    emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', opacity: 0.5 },
+    
+    emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', opacity: 0.5, minHeight: 150 },
     emptyStateText: { color: 'white', textAlign: 'center', fontSize: 16 },
+    
     playerCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#27272a', paddingVertical: 14, paddingHorizontal: 16, borderRadius: 12, marginBottom: 8 },
     playerName: { color: 'white', fontSize: 16, fontWeight: 'bold' },
     deleteButton: { padding: 4 },
+    
     footerSection: { gap: 0 },
     inputRow: { flexDirection: 'row', gap: 12, marginBottom: 8 },
     input: { flex: 1, height: 56, backgroundColor: '#27272a', borderRadius: 12, paddingHorizontal: 16, color: 'white', fontSize: 16, borderWidth: 1, borderColor: '#3f3f46' },

@@ -68,6 +68,7 @@ Listagem de caminhos de pasta
 �       GenericGame.jsx
 �       MestreMandou.jsx
 �       ProvavelGame.jsx
+�       RoletaRussa.jsx
 �       TribunalGame.jsx
 �       VerdadeOuDesafio.jsx
 +---hooks

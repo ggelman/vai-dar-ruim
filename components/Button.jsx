@@ -1,5 +1,6 @@
 import { Text, TouchableOpacity, StyleSheet } from 'react-native';
 import PropTypes from 'prop-types';
+import * as Haptics from 'expo-haptics'; 
 
 const Button = ({ children, onClick, variant = 'primary', disabled = false, style }) => {
     const getBg = () => {
@@ -30,15 +31,18 @@ const Button = ({ children, onClick, variant = 'primary', disabled = false, styl
 
     const borderStyle = variant === 'outline' ? { borderWidth: 2, borderColor: '#ffffff' } : {};
 
+    const handlePress = () => {
+        if (!disabled) {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            onClick();
+        }
+    };
+
     return (
         <TouchableOpacity
-            onPress={() => {
-                if (!disabled) {
-                    onClick();
-                }
-            }}
+            onPress={handlePress}
             disabled={disabled}
-            activeOpacity={0.8}
+            activeOpacity={0.7} 
             style={[
                 styles.btnBase,
                 { backgroundColor: getBg() },
@@ -65,14 +69,20 @@ const styles = StyleSheet.create({
     btnBase: {
         paddingVertical: 16,
         paddingHorizontal: 24,
-        borderRadius: 12,
+        borderRadius: 16, 
         alignItems: 'center',
         justifyContent: 'center',
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 4, 
     },
     btnText: {
         fontSize: 16,
         fontWeight: 'bold',
         textAlign: 'center',
+        letterSpacing: 0.5, 
     },
 });
 

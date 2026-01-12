@@ -6,6 +6,8 @@ export const DeckContext = createContext({});
 
 export function DeckProvider({ children }) {
     const [decks, setDecks] = useState({});
+    
+    const [chaosTrigger, setChaosTrigger] = useState(0);
 
     const generateDeck = (gameId, level) => {
         if (!DB_CONTENT[gameId]) return [];
@@ -13,10 +15,10 @@ export function DeckProvider({ children }) {
         let gameDeck = DB_CONTENT[gameId].filter(card => {
             if (level === 'fun') return card.level === 'fun';
             if (level === 'prohibited') return ['fun', 'prohibited'].includes(card.level);
+            if (level === 'chaos') return ['prohibited', 'chaos'].includes(card.level);
             return true;
         });
         
-        // Fisher-Yates Shuffle
         for (let i = gameDeck.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
             [gameDeck[i], gameDeck[j]] = [gameDeck[j], gameDeck[i]];
@@ -24,22 +26,19 @@ export function DeckProvider({ children }) {
         return gameDeck;
     };
 
-    // CORREÇÃO: Aceita customCards e os mistura
     const resetDecks = (level, customCards = []) => {
         const newDecks = {};
         
         Object.keys(DB_CONTENT).forEach(gameId => {
             let deck = generateDeck(gameId, level);
             
-            // Injeta cartas coringa em jogos compatíveis (texto puro)
             if (customCards.length > 0 && ['eu_nunca', 'kings', 'tribunal'].includes(gameId)) {
-                const formattedCustoms = customCards.map(text => ({
-                    text: `🃏 CORINGA 🃏\n\n${text}`,
-                    level: 'chaos',
-                    type: 'custom' // Identificador para UI futura
+                const formattedCustoms = customCards.map(c => ({
+                    text: `🃏 CORINGA 🃏\n\n${typeof c === 'string' ? c : c.text}`,
+                    level: 'chaos', // Coringas são considerados caos para piscar a tela
+                    type: 'custom'
                 }));
                 
-                // Adiciona ao baralho e reembaralha levemente
                 deck = [...deck, ...formattedCustoms];
                 deck.sort(() => Math.random() - 0.5);
             }
@@ -60,6 +59,10 @@ export function DeckProvider({ children }) {
 
         const card = validCards[0];
         
+        if (card.level === 'chaos') {
+            setChaosTrigger(Date.now());
+        }
+
         const newDeckList = decks[gameId].filter(c => c !== card);
         setDecks(prev => ({ ...prev, [gameId]: newDeckList }));
 
@@ -69,7 +72,14 @@ export function DeckProvider({ children }) {
     const vibrate = (pattern = 100) => Vibration.vibrate(pattern);
 
     return (
-        <DeckContext.Provider value={{ decks, buildDecks, resetDecks, drawCard, vibrate }}>
+        <DeckContext.Provider value={{ 
+            decks, 
+            buildDecks, 
+            resetDecks, 
+            drawCard, 
+            vibrate,
+            chaosTrigger 
+        }}>
             {children}
         </DeckContext.Provider>
     );

@@ -7,7 +7,6 @@ import { DeckProvider } from '../contexts/DeckContext';
 
 export default function Layout() {
     return (
-        // [ALTERAÇÃO]: Envolvendo o app com GestureHandlerRootView para habilitar gestos complexos
         <GestureHandlerRootView style={{ flex: 1 }}>
             <SafeAreaProvider>
                 <SessionProvider>

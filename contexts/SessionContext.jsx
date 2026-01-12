@@ -2,7 +2,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Platform, Alert } from 'react-native';
 
-// --- MOCK DE PAGAMENTO (Mantido para não quebrar Expo Go) ---
 let Purchases, RevenueCatUI, LOG_LEVEL, PAYWALL_RESULT;
 try {
     const rc = require('react-native-purchases');
@@ -35,22 +34,23 @@ export function SessionProvider({ children }) {
     const [unlockedItems, setUnlockedItems] = useState(['subscription']);
     const [players, setPlayers] = useState([]);
     
-    // Configuração interna
     const [config, setConfigState] = useState({ people: 4, level: 'fun' });
     
     const [playlist, setPlaylist] = useState([]);
     const [isLoaded, setIsLoaded] = useState(false);
 
-    // --- AQUI ESTAVA FALTANDO ---
-    // Estado das Cartas Coringa
     const [customCards, setCustomCards] = useState([]); 
-    // ---------------------------
 
-    // Wrapper para setConfig que limpa jogadores excedentes
+    const trackEvent = (eventName, params = {}) => {
+        // Em produção, substituir por: analytics().logEvent(eventName, params);
+        if (__DEV__) {
+            console.log(`📊 [TRACK]: ${eventName}`, params);
+        }
+    };
+
     const setConfig = (newConfig) => {
         setConfigState(prev => {
             const updated = { ...prev, ...newConfig };
-            // Se reduziu o número de pessoas, corta o array de jogadores
             if (players.length > updated.people) {
                 const trimmedPlayers = players.slice(0, updated.people);
                 setPlayers(trimmedPlayers);
@@ -59,7 +59,25 @@ export function SessionProvider({ children }) {
         });
     };
 
-    // Inicialização (IAP + Storage)
+    const addPlayer = (name) => {
+        const newPlayer = {
+            id: Date.now(),
+            name: name || `Jogador ${players.length + 1}`,
+            sex: 'M' // Default
+        };
+        setPlayers(prev => [...prev, newPlayer]);
+        trackEvent('PLAYER_ADDED_INGAME');
+    };
+
+    const removePlayer = (id) => {
+        if (players.length <= 2) {
+            Alert.alert("Epa!", "O jogo precisa de pelo menos 2 jogadores.");
+            return;
+        }
+        setPlayers(prev => prev.filter(p => p.id !== id));
+        trackEvent('PLAYER_REMOVED_INGAME');
+    };
+
     useEffect(() => {
         const init = async () => {
             try {
@@ -70,9 +88,11 @@ export function SessionProvider({ children }) {
                 const info = await Purchases.getCustomerInfo();
                 if (info?.entitlements?.active?.['Vai dar ruim Pro']) {
                     setUnlockedItems(prev => [...new Set([...prev, 'chaos', 'tribunal', 'provavel'])]);
+                    trackEvent('APP_OPEN', { user_type: 'premium' });
+                } else {
+                    trackEvent('APP_OPEN', { user_type: 'free' });
                 }
 
-                // Carregar dados salvos
                 const savedPlayers = await AsyncStorage.getItem('@players');
                 const savedItems = await AsyncStorage.getItem('@unlockedItems');
                 const savedCustom = await AsyncStorage.getItem('@customCards');
@@ -95,42 +115,36 @@ export function SessionProvider({ children }) {
         init();
     }, []);
 
-    // Persistência automática de Jogadores
-    useEffect(() => {
-        if (isLoaded) AsyncStorage.setItem('@players', JSON.stringify(players));
-    }, [players, isLoaded]);
-
-    // Persistência automática de Itens Desbloqueados
-    useEffect(() => {
-        if (isLoaded) AsyncStorage.setItem('@unlockedItems', JSON.stringify(unlockedItems));
-    }, [unlockedItems, isLoaded]);
-
-    // Persistência automática de Cartas Coringa
-    useEffect(() => {
-        if (isLoaded) AsyncStorage.setItem('@customCards', JSON.stringify(customCards));
-    }, [customCards, isLoaded]);
+    useEffect(() => { if (isLoaded) AsyncStorage.setItem('@players', JSON.stringify(players)); }, [players, isLoaded]);
+    useEffect(() => { if (isLoaded) AsyncStorage.setItem('@unlockedItems', JSON.stringify(unlockedItems)); }, [unlockedItems, isLoaded]);
+    useEffect(() => { if (isLoaded) AsyncStorage.setItem('@customCards', JSON.stringify(customCards)); }, [customCards, isLoaded]);
 
     const handlePurchase = async () => {
+        trackEvent('PURCHASE_ATTEMPT');
         try {
             const result = await RevenueCatUI.presentPaywall();
             if (result === PAYWALL_RESULT.PURCHASED || result === PAYWALL_RESULT.RESTORED) {
                 setUnlockedItems(prev => [...new Set([...prev, 'chaos', 'tribunal', 'provavel'])]);
+                trackEvent('PURCHASE_SUCCESS', { method: 'revenue_cat' });
                 return true;
             }
+            trackEvent('PURCHASE_CANCELLED');
             return false;
         } catch (e) {
+            trackEvent('PURCHASE_ERROR', { error: e.message });
             return false;
         }
     };
 
     return (
         <SessionContext.Provider value={{
-            players, setPlayers,
+            players, setPlayers, addPlayer, removePlayer,
             config, setConfig,
             playlist, setPlaylist,
             unlockedItems, setUnlockedItems,
-            customCards, setCustomCards, // Expondo para o app
+            customCards, setCustomCards,
             handlePurchase,
+            trackEvent, 
             isLoaded
         }}>
             {children}
